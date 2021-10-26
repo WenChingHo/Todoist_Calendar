@@ -7,6 +7,11 @@
   Gatsby minimal starter
 </h1>
 
+
+
+git log --pretty=format:"%h - %an, %ar : %s"
+
+
 ## 🚀 Quick start
 
 1.  **Create a Gatsby site.**

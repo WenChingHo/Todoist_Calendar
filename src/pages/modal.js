@@ -1,77 +1,125 @@
 import * as React from "react"
+import ReactModal from 'react-modal'
 
-class ModalTemplate extends React.Component {
-    checkTab(){
-        var tab_clicked = this.props.tab
-        console.log(this.props.tab)
-        if (tab_clicked == "Login"){
-            return (<LoginModal/>)
+
+
+
+ReactModal.setAppElement('#___gatsby')
+
+class ReactModalTemplate extends React.Component {
+    constructor(props) {
+        super(props)
+        this.state = {}
+        this.MODALLIST = this.updateModalList()
+    }
+
+    static getDerivedStateFromProps(props, cur_state) {
+        if (cur_state.APIToken !== props.APIToken) {
+            return {
+                APIToken: props.APIToken
+            }
         }
-        else if (tab_clicked == "Calendar"){
-            return (<CalendarModal/>)
-        }
-        else if (tab_clicked == "Create_Tasks"){
-            return (<CreateTaskModal/>)
-        }
-        else if (tab_clicked == "Task_Templates"){
-            return (<TaskTemplateModal/>)
-        }
+        return null
+    }
+
+    updateModalList = () =>{
+        this.MODALLIST = [
+            <LoginModal {...this.state} {...this.props.state} APITokenCB={this.props.APITokenCB} />,
+            <CaldendarModal />,
+            <CreateTaskModal />,
+            <TaskModal />
+        ]
     }
 
     render() {
-        const contentToRender = this.checkTab()
+        this.updateModalList()
+        const contentToLoad = this.MODALLIST[parseInt(this.props.state.currentTab)]
         return (
-            <div className={"modal " + this.props.tab + "_modal_lg"} tabIndex="-1" role="dialog">
-                <div className="modal-dialog modal-lg" role="document">
-                    <div className="modal-content">
-                        <div className="modal-header">
-                            <h5 className="modal-title">{this.props.tab}</h5>
-                            <button type="button" className="close" data-dismiss="modal" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                        <div className="modal-body">
-                            {contentToRender}
-                        </div>
-                        <div className="modal-footer">
-                            <button type="button" className="btn btn-primary">Save changes</button>
-                            <button type="button" className="btn btn-secondary" data-dismiss="modal">Close</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <ReactModal
+                id={this.props.state.tabName}
+                style={contentToLoad}
+                isOpen={this.props.state.isModalOpen}
+                onRequestClose={this.props.CB}
+                preventScroll={true}
+            >
+                <div onClick={this.props.CB} id="modalClose" aria-hidden="true">&times;</div>
+                <div>{contentToLoad}</div>
+            </ReactModal>
+
+        )
+    }
+}
+
+class LoginUserList extends React.Component {
+    constructor(props) {
+        super(props)
+        this.UNWANTED_ENTRIES = ["graphiql:operationName", "ally-supports-cache"]
+    }
+
+    onChangeHandler = (e) => {
+        var APItoken = localStorage.getItem(e.target.value)
+        this.props.APITokenCB(APItoken)
+    }
+    render() {
+        var entries = Object.entries(localStorage).map(([key, _], i) => (
+            !this.UNWANTED_ENTRIES.includes(key) && <option key={i} value={key}>{key}</option>
+        ))
+
+        console.log("user",this.props.username)
+        return (
+            <select value={this.props.username} onChange={this.onChangeHandler} name="users" id="users">
+                <option key="-1" value="Guest">Guest</option>
+                {entries}
+            </select>
         )
     }
 }
 
 class LoginModal extends React.Component {
-    render(){
-        return(
-            <div>temporary</div>
+    render() {
+        return (
+            <div>
+                <p className="modalTitles">Connect to Todoist</p>
+                <hr />
+                <p className="smallIndent">Currently Connected As:</p>
+                <div className="avatar">
+                    <div className="avatar__img">
+                        <img src="https://picsum.photos/70" alt="avatar" ></img>
+                    </div>
+                </div><br />
+
+                <div id="loginUsername" >
+                    <LoginUserList {...this.props} APITokenCB={this.props.APITokenCB}/>
+                    <div className="smallIndent"> {this.props.APIToken === 0 ? "" : this.props.APIToken}</div>
+                </div><br /><br />
+
+                <label htmlFor="APIToken">Enter your Todoist API token to add new user:</label><br />
+                <input type="text" id="APIToken" name="APIToken" /><br /><br />
+                <button onClick={() => this.props.APITokenCB(document.getElementById("APIToken").value)}>submit</button>
+
+            </div>
+
         )
+
+
     }
 }
-class CalendarModal extends React.Component {
-    render(){
-        return(
-            <div>temporary</div>
-        )
+class CaldendarModal extends React.Component {
+    render() {
+        return (<p>CaldendarModal</p>)
+
     }
 }
 class CreateTaskModal extends React.Component {
-    render(){
-        return(
-            <div>temporary</div>
-        )
-    }
-}
-class TaskTemplateModal extends React.Component {
-    render(){
-        return(
-            <div>temporary</div>
-        )
-    }
-}
+    render() {
+        return (<p>CreateTaskModal</p>)
 
 
-export {ModalTemplate, LoginModal, CalendarModal, CreateTaskModal, TaskTemplateModal }
+    }
+}
+class TaskModal extends React.Component {
+    render() {
+        return (<p>TaskModal</p>)
+    }
+}
+export default ReactModalTemplate
