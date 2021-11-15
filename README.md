@@ -6,7 +6,7 @@
 
 
 ## General info: 
-Use Todoist's official API to visualize all completed and scheduled task in a calendar format to make it easier to see if you've been slacking off recently! <br><br>
+A web app that uses Todoist's official API to visualize all the completed and scheduled tasks to make it easier to see if you've been slacking off recently! <br><br>
 <img src="https://github.com/WenChingHo/Todoist_Calendar/blob/main/demo/0.png" width="900">
 <p>1. Default view before connecting to Todoist </p>
 <img src="https://github.com/WenChingHo/Todoist_Calendar/blob/main/demo/1.png" width="900">
