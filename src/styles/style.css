@@ -1,10 +1,13 @@
 
 
  .selected{
-    background-color: rgba(173, 221, 255,0.5);
+    background-color: rgba(173, 221, 255,0.6);
+    transition: all 0.15s linear;
+    box-shadow: 0px 15px 20px -20px black;
 }
 .day:active{
-    background-color: rgba(173, 221, 255,0.6);
+    
+    box-shadow: inset 8px 10px 20px -25px black;
 }
 #calendar_month{
     font-size:30px;
@@ -199,6 +202,7 @@ body {
 
 .calendar__day {
     overflow-y: hidden;
+    transition: all 0.1s linear;
 }
 .uneditables{
     
@@ -283,7 +287,7 @@ body {
 
 .calendar {
     background-color: white;
-    border: 1px solid #e1e1e1;
+    border: 1px solid #cdcdcd;
 }
 
 .calendar__week {
@@ -298,9 +302,9 @@ body {
 }
 
 .calendar__day {
-    border: 1px solid #e1e1e1;
-    overflow-x: scroll;
-
+    border: 1px solid #cdcdcd;
+    padding-right:0.4rem;
+    padding-top:0.4rem; 
 }
 
 .calendar_reserved {
@@ -328,7 +332,7 @@ body {
 
 .toggle__option {
     padding: 16px;
-    border: 1px solid #e1e1e1;
+    border: 1px solid #cdcdcd;
     border-radius: 8px;
     text-transform: capitalize;
     cursor: pointer;
@@ -440,33 +444,253 @@ select:focus{
     justify-content: right;
     min-height: 0rem;
     width:95%;
-    overflow-x: scroll;
     overflow-y:hidden ;
     white-space: nowrap;
-   
+    margin-top: -0.8rem;
+    padding-bottom: 0!important;
 }
 
 .todoDots{
     color: rgb(65, 110, 194)   ;
     width:1rem;
-    height:0.5rem;
+    height:0.3rem;
+    display: inline-block;
+    position: relative;
+}
+.completedDots{
+    color: rgb(195, 71, 71)   ;
+    width:1rem;
+    height:0.3rem;
     display: inline-block;
     position: relative;
 }
 .todoDotsDescription{
     position:fixed;
-    width:10rem;
+    max-width:30rem;
+    padding: 0.5rem 1rem 0 1rem;
     font-size: 1rem;
-    border: 1px solid black;
-    background-color: rgb(255, 255, 255);
+    border: 1px solid rgba(73, 81, 167, 0.117); 
+    background: rgba(255, 255, 255,0.2);
+    mix-blend-mode: normal;
+    backdrop-filter: blur(7.5px);
+    box-shadow: 0px 20px 13px -22px rgba(73, 81, 167, 0.567);
+
+    visibility: hidden;
     display: none;
     text-align: left;
-    height:30rem;
-    z-index: 0;
+
+    z-index: 11;
     
 }
 
 .show{
+    visibility: visible;
     display: block !important;
+    transition: all 1.5s;
+}
 
+
+
+
+
+
+
+* {
+    
+    font-family: "Perpetua";
+  }
+  
+ 
+  
+  .cardTop {
+    width: 497px;
+    height: 300px;
+    background: #fac24f;
+    border-radius: 20px;
+    display: flex;
+
+    align-items: flex-end;
+  }
+  .floatingTime{
+      position: absolute;
+      left:34px;
+      padding-top:2px;
+      font-size: 0.77rem;
+      font-weight:550;
+        color:rgba(112, 112, 112, 0.9);
+
+  }
+  .timeline {
+    width: 355px;
+    height: 30rem;
+    background: #ecf1f511;
+    mix-blend-mode: normal;
+    backdrop-filter: blur(25px);
+    overflow-y:scroll;
+    position: absolute;
+    top: 144px;
+    margin-left: 71px;
+    box-shadow: 0px 20px 53px -22px rgba(73, 81, 167, 0.567);
+    border-radius: 10px;
+    border-top: 3px solid rgba(73, 81, 167, 0.117);
+    transition:0.5s all
+  }
+  .timeline h3 {
+    font-family: Open Sans;
+    font-style: normal;
+    font-weight: bold;
+    font-size: 22px;
+    line-height: 30px;
+    color: #ffffff;
+    margin-left: 66px;
+    margin-top: 40px;
+  }
+  .timeline label {
+    font-family: Open Sans;
+    font-style: normal;
+    font-weight: normal;
+    font-size: 16px;
+    line-height: 22px;
+    /* identical to box height */
+    margin-left: 66px;
+    margin-top: 10px;
+    color: #ffffff;
+  }
+  .timeline .box {
+    width: 100%;
+    margin-top: 99.5px;
+  }
+  .timeline .box .container {
+    width: 100%;
+    height: 357px;
+    display: flex;
+  }
+  .timeline .box .container .lines {
+    margin-left: 25px;
+    margin-top: 6px;
+  }
+  .cdot{
+      background: rgb(195, 71, 71)!important;
+  }
+  .timeline .box .container .lines .dot {
+    width: 14px;
+    height: 14.5px;
+    background:  rgb(65, 110, 194) ;
+    backdrop-filter: blur(55px);
+    border-radius: 7px;
+    margin-left: -3px;
+    z-index:999;
+  }
+  .timeline .box .container .lines .line {
+    height: 110px;
+    width: 2px;
+    background: #d1d6e6;
+    margin-left: 3px;
+  }
+  .timeline .box .container .cards {
+    margin-left: 12px;
+    transform: translateY(-50px);
+    transition: all 0.5s;
+  }
+  .timeline .box .container .cards .card {
+    width: 249px;
+    height: 6rem;
+    padding-top: 25px;
+    padding-bottom:10px;
+    background: #ffffff;
+    box-shadow: 0 2px 2px 0 #eeeeee40;
+    border-radius: 10px;
+    box-shadow: 0px 16px 15px -10px rgba(105, 96, 215, 0.0944602);
+    margin-bottom: 10px;
+    overflow-y: scroll;
+    display: inline-block;
+  }
+  .halfdiv{
+        position: fixed;
+        border-radius: 10px;
+        width: 47.5%;
+        height: 6rem;
+        margin-top:-25px;
+
+  }
+  .halfdiv:hover{
+      background: rgba(217, 217, 217, 0.1);
+      mix-blend-mode: normal;
+    backdrop-filter: blur(0.25px);
+  }
+  .halfdiv:hover p{
+    display:block!important;
+    color:rgb(180, 180, 180)
+}
+  .timeline .box .container .cards .card.mid {
+    height: 71px;
+  }
+  .timeline .box .container .cards .card h4 {
+    font-family: Open Sans;
+    font-style: normal;
+    font-weight: bold;
+    font-size: 15px;
+    line-height: 19px;
+    margin-left: 25px;
+    margin-bottom: 5px;
+    color: #2b2862;
+  }
+  .timeline .box .container .cards .card p {
+    font-family: Open Sans;
+    font-style: normal;
+    font-weight: normal;
+    font-size: 16px;
+    line-height: 22px;
+    color: #2b2862;
+    margin-left: 25px;
+  }
+  .timeline .box .bottom {
+    width: 100%;
+    height: 107px;
+    background: #fff;
+    box-shadow: 0 0 2px #eeeeee50;
+    padding-top: 45px;
+  }
+  .timeline .box .bottom .btn {
+    width: 249px;
+    height: 62px;
+    background: #ffffff40;
+    mix-blend-mode: normal;
+    cursor: pointer;
+    border: 1px solid #8260d780;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: Open Sans;
+    font-style: normal;
+    font-weight: bold;
+    font-size: 14px;
+    line-height: 19px;
+    color: #2b2862;
+    margin-left: 53px;
+    transition: 0.3s;
+    background: #2b2862;
+    color: #fff;
+    border-color: #2b2862;
+  }
+  .timeline .box .bottom .btn:hover {
+    transform: scale(1.03);
+  }
+.dotTitle{
+    font-weight: bold;
+    margin-bottom: -0.2rem;
+}
+
+.hidden{
+    display:none
+}
+
+.edittask:hover p{
+    display:block!important;
+}
+.float{
+    float:right;
+    margin-top:-0.7rem;
+    margin-right: 0.5rem;
 }

@@ -1,6 +1,6 @@
 import * as React from "react"
+import SideBar from "./sidebar";
 import ReactModalTemplate from "./modal"
-
 
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.min.js";
@@ -15,7 +15,7 @@ class CalendarFunctionBar extends React.Component {
         super(props)
     }
 
-    onClickHandle = (e) => {
+    onClickHandler = (e) => {
         var data = this.props
         if (e.target.id === "prevMonth") {
             data.month === 0 ?
@@ -46,25 +46,36 @@ class CalendarFunctionBar extends React.Component {
 class CalendarContents extends React.Component {
     constructor(props) {
         super(props)
-        this.state = { dateSelected: -1 }
-
-    }
-
-    static getDerivedStateFromProps(props, cur_state) {
-        if (cur_state.dateSelected === -1 && "monthStartWeekDay" in props) {
-            return {
-                dateSelected: props.day + props.monthStartWeekDay - 1
-            }
+        this.state = {
+            cellIndexSelected: -1,
+            dateSelected: -1
         }
-        return null
     }
 
     selectDateHandler = (day, id) => {
         this.setState((prevState) => ({
-            dateSelected: prevState.dateSelected === id ? -99 : id
+            cellIndexSelected: prevState.cellIndexSelected === id ? -99 : id,
+            dateSelected: prevState.dateSelected === day ? -99 : day,
+            tasks: "",
+            completed: ""
         }))
     }
 
+    static getDerivedStateFromProps(props, cur_state) {
+        //Sort the tasks/completed task chronologically
+        if (props.tasks !== cur_state.tasks) {
+            for (const [key, _] of Object.entries(props.tasks)) {
+                props.tasks[key] = props.tasks[key].sort((a, b) => new Date(a.due).getTime() - new Date(b.due).getTime());
+            }
+            for (const [key, _] of Object.entries(props.completed)) {
+                props.completed[key] = props.completed[key].sort((a, b) => new Date(a.due).getTime() - new Date(b.due).getTime());
+            }
+            return ({
+                tasks: props.tasks,
+                completed: props.completed
+            })
+        }
+    }
 
     render() {
         const weekdays = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
@@ -79,9 +90,17 @@ class CalendarContents extends React.Component {
                 <CalendarCells
                     dayInMonth={this.props.dayInMonth}
                     monthStartWeekDay={this.props.monthStartWeekDay}
-                    tasks={this.props.tasks}
-                    dateSelected={this.state.dateSelected}
+                    tasks={this.state.tasks}
+                    completed={this.state.completed}
+                    cellIndexSelected={this.state.cellIndexSelected}
                     selectNewDateCB={this.selectDateHandler}
+                />
+                <TaskTimeline
+                    tasks={this.state.tasks}
+                    completed={this.state.completed}
+                    dateSelected={this.state.dateSelected}
+                    month={this.props.month}
+                    user={this.props.username}
                 />
             </div>
         )
@@ -89,6 +108,72 @@ class CalendarContents extends React.Component {
 }
 
 
+class TaskTimeline extends React.Component {
+    constructor(props) {
+        super(props)
+        this.state = {
+        }
+    }
+    render() {
+
+        let selectedCell = document.getElementById(`day_${this.props.dateSelected}`)
+        let position;
+
+        if (selectedCell) {
+            position = selectedCell && selectedCell.getBoundingClientRect()
+        }
+        var todayTask = this.props.tasks[this.props.dateSelected]
+        var todayComplete = this.props.completed[this.props.dateSelected]
+        return (
+            <div style={selectedCell && this.props.user !== "Guest" ? { //Show when selected and if not "Guest"
+                left: position.x + position.width / 2 >= document.body.clientWidth - 600 ? position.x - position.width / 2 - 300 : position.x + position.width / 2,
+                bottom: position.y
+            } : { display: "none" }} className="timeline">
+                <div className="box">
+                    <div className="container">
+                        <div className="lines">
+                            {todayComplete && todayComplete.map((task, i) => <DrawLines id={i} task={task} type={"complete"} />)}
+                            {todayTask && todayTask.map((task, i) => <DrawLines id={i} task={task} />)}
+                            <div style={{ background: "white", border: "1px solid grey" }} className="dot"></div>
+                        </div>
+                        <div className="cards">
+                            <DrawCards tasks={todayComplete} type="complete" />
+                            <DrawCards tasks={todayTask}  type="task"/>
+                            <div className="card">
+                                <h4>Add Task?</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )
+    }
+}
+function DrawCards(props) {
+    return (
+        props.tasks ?
+            props.tasks.map((task, i) => {
+                return (
+                    <div key={i} className="card">
+                        <i className="float fa fa-trash-o"></i>
+                        <i className={"float fa " + (props.type==="complete"? "fa-undo" :"fa-check")}></i>
+                        <h4>{task.content}</h4>
+                        <p>{task.description}</p>
+                    </div>
+                )
+            }) : ""
+    )
+}
+function DrawLines(props) {
+    console.log(props)
+    return (
+        <div key={props.id}>
+            <div className={props.type === "complete" ? "cdot dot" : "dot"}></div>
+            <p className="floatingTime">{props.task["due"].slice(11, 16)}</p>
+            <div className="line"></div>
+        </div>
+    )
+}
 class CalendarCells extends React.Component {
     constructor(props) {
         super(props)
@@ -115,24 +200,13 @@ class CalendarCells extends React.Component {
         e.preventDefault()
 
     }
-    presentTasks = () => {
-        var tasks = this.state.tasks
-        var tasksTable = {}
 
-        for (var i of tasks) {
-            var date = i.due.slice(8, 10)
-
-            tasksTable[date] === undefined ?
-                tasksTable[date] = [i] : tasksTable[date].push(i)
-        }
-        return tasksTable
-    }
     onClickHandler(day, i) {
+        day = this.props.dayInMonth === -1 ? day : day + 1
         this.props.selectNewDateCB(day, i)
     }
     drawCalendarTable() {
         let range = n => [...Array(n).keys()]
-        let tasks = this.presentTasks()
         let dayCell = range(this.props.dayInMonth)
 
         if (this.props.monthStartWeekDay >= 0) {
@@ -150,28 +224,14 @@ class CalendarCells extends React.Component {
                 onDragOver={this.onDragOver}
                 key={"day_" + i}
                 id={"day_" + (day === -1 ? " " : day + 1)}
-                className={"calendar__day day" + (i === this.props.dateSelected ? " selected" : "")}>
+                className={"calendar__day day" + (i === this.props.cellIndexSelected ? " selected" : "")}>
                 <p>{day === -1 ? " " : day + 1}</p>
-                <DottedTasks day={day + 1} tasks={tasks[day + 1]} />
-                <div
-                    style={{ display: i === this.props.dateSelected ? "block" : "none" }}
-                    className="detailedTaskDiv">
-                    {tasks[day + 1] !== undefined ? tasks[day + 1].map((task, i) => {
-                        return (
-                            <div>
-                                <input type="checkbox" key={i}></input>
-                                <label for="vehicle1">{task.content}</label><br></br>
-                            </div>
-                        )
-                    }) : ""
-                    }
-                </div>
+                <DottedTasks day={day + 1} tasks={this.props.tasks[day + 1]} completed={this.props.completed[day + 1]} />
             </div>
         ))
     }
 
     render() {
-        this.presentTasks()
         const dayCells = this.drawCalendarTable()
         return (
             <div className="calendar__week">
@@ -187,103 +247,67 @@ class DottedTasks extends React.Component {
         this.state = {
             left: 0,
             top: 0,
-            selected: -1
+            selectedTodo: -1,
+            selectedCompleted: -1
         }
     }
 
     onMouseEnterHandler = (e, i) => {
+        var classname = e.target.className
+        console.log(e.nativeEvent.clientX)
         this.setState({
             top: e.target.offsetTop,
             left: e.nativeEvent.clientX,
-            selected: i
+            selectedTodo: classname[0] === "t" ? i : -1,
+            selectedCompleted: classname[0] === "c" ? i : -1
         })
     }
     onMouseLeaveHandler = (e) => {
         this.setState({
-            selected: -1
+            selectedTodo: -1,
+            selectedCompleted: -1
         })
     }
     render() {
+        console.log(this.props.completed)
         return (
-            <div className="taskDots">
-                {this.props.tasks && this.props.tasks.map((task, i) => {
-                    return (
-                        <div
-                            onMouseEnter={(e) => this.onMouseEnterHandler(e, i)}
-                            onMouseLeave={this.onMouseLeaveHandler}
-                            className={"todoDots " + this.props.day + "DotDay"}>●
+            <div>
+                <div className="taskDots">
+                    {this.props.completed ? this.props.completed.map((task, i) => {
+                        return (
                             <div
-                                key={i}
-                                style={{ top: this.state.top + 30, left: this.state.left }}
-                                className={"todoDotsDescription" + (this.state.selected === i ? " show" : "")}>
-                                <p>{task.content}</p>
-                                <p>{task.due}</p>
+                                onMouseEnter={(e) => this.onMouseEnterHandler(e, i)}
+                                onMouseLeave={this.onMouseLeaveHandler}
+                                className={"completedDots " + this.props.day + "DotDay"}>●
+                                <div
+                                    key={i}
+                                    style={{ top: this.state.top + 30, left: this.state.left }}
+                                    className={"todoDotsDescription" + (this.state.selectedCompleted === i ? " show" : "")}>
+                                    <p class="dotTitle">{task.content}</p>
+                                    <p>{"Finished on: " + task["due"].slice(11, 16)}</p>
+                                </div>
                             </div>
-                        </div>
-                    )
-                })}
-            </div>
-        )
-    }
-}
-class SideBar extends React.Component {
-    constructor(props) {
-        super(props)
-        this.state = {
-            currentTab: 0,
-            isModalOpen: false,
-            tabName: "Login",
-            username: "Guest"
-        }
-        this.SIDEBAR_CONTENT = ["Login", "Calendar", "Create Tasks", "Task Templates"]
-        this.tabsOnclickHandler = this.tabsOnclickHandler.bind(this)
-    }
-    tabsOnclickHandler(e) {
-        this.setState({
-            isModalOpen: true,
-            currentTab: e.target.id,
-            tabName: e.target.outerText.replace(" ", "_")
-        })
-    }
-    static getDerivedStateFromProps(props, cur_state) {
-        if (cur_state.username !== props.username) {
-            return {
-                username: props.username
-            }
-        }
-        return null
-    }
-
-    handleModalClose = event => {
-        // console.log('handleModalOpen: ', event);
-        this.setState({
-            isModalOpen: false,
-        })
-    }
-
-    render() {
-        const sidebarTabs = this.SIDEBAR_CONTENT.map((tab, i) => (
-            <div key={i}>
-                <div
-                    id={i + "_tab"}
-                    className="tabs"
-                    onClick={this.tabsOnclickHandler}
-                > {tab}
+                        )
+                    }) : <div className="completedDots"></div>}
                 </div>
-            </div>
-        ))
-
-        return (
-            <div className="sidebar">
-                <ReactModalTemplate {...this.props} state={this.state} CB={this.handleModalClose} APITokenCB={this.props.APITokenCB} />
-
-                <div className="avatar">
-                    <div className="avatar__img">
-                        <img src="https://picsum.photos/70" alt="avatar" ></img>
-                    </div>
+                <div className="taskDots">
+                    {this.props.tasks && this.props.tasks.map((task, i) => {
+                        return (
+                            <div
+                                onMouseEnter={(e) => this.onMouseEnterHandler(e, i)}
+                                onMouseLeave={this.onMouseLeaveHandler}
+                                className={"todoDots " + this.props.day + "DotDay"}>●
+                                <div
+                                    key={i}
+                                    style={{ top: this.state.top + 30, left: this.state.left }}
+                                    className={"todoDotsDescription" + (this.state.selectedTodo === i ? " show" : "")}>
+                                    <p class="dotTitle">{task.content}</p>
+                                    <p>{task["due"].slice(11, 16) || "No scheduled Time"}</p>
+                                </div>
+                            </div>
+                        )
+                    })}
                 </div>
-                <div className="avatar__name">{this.state.username}</div>
-                {sidebarTabs}
             </div>
         )
     }
@@ -294,13 +318,12 @@ class Calendar extends React.Component {
         super(props)
         this.state = {
             data: [],
-            APIToken: 0,
+            APIToken: document.cookie || 0,
             username: "Guest",
-            tasks: ""
+            tasks: "",
+            completed: ""
         };
         this.getMonthDetail = this.getMonthDetail.bind(this)
-        this.updateAPIToken = this.updateAPIToken.bind(this)
-
     }
 
     componentDidMount() { //Initial render
@@ -316,51 +339,96 @@ class Calendar extends React.Component {
             monthStartWeekDay: new Date(`${year}-${month + 1}-01`).getDay() - 1,
             dayInMonth: new Date(year, month, 0).getDate(),
         })
+        this.state.APIToken && this.fetchMonthlyData(this.state.APIToken, month, year)
     }
 
-    updateAPIToken(APItoken) {
-        !APItoken ? (function (newthis) {
-            newthis.setState({  //Logout to guest
+    fetchMonthlyData = (APItoken, month, year) => {
+        this.setState({
+            dataLoaded: false
+        })
+        return fetch(`http://127.0.0.1:5000/connect?api=${APItoken}&month=${month}&year=${year}`) //Else connect via APItoken
+            .then(res => res.json())
+            .then((res) => {
+                localStorage.setItem(res.user.full_name, APItoken)
+                document.cookie = APItoken
+                this.setState({
+                    APIToken: APItoken,
+                    username: res.user.full_name,
+                    tasks: this.memoizeTasks(res.tasks) || [],
+                    completed: this.memoizeTasks(res.completed) || [],
+                    dataLoaded: true
+                })
+            })
+    }
+    memoizeTasks = (tasks) => {
+        var tasksTable = {}
+
+        for (var i of tasks) {
+            var date = i["due"].slice(8, 10)
+            date = date.replace(/^0+/, '')
+            tasksTable[date] === undefined ?
+                tasksTable[date] = [i] : tasksTable[date].push(i)
+        }
+        return tasksTable
+    }
+
+    updateAPIToken = (APItoken) => {
+        !APItoken ? (() => {
+            this.setState({  //Logout to guest
                 APIToken: 0,
                 username: "Guest",
-                tasks: ""
+                tasks: "",
+                completed: "",
+                dataLoaded: false,
             })
             alert("You're now browsing as Guest")
         })(this)
             :
-            fetch(`http://127.0.0.1:5000/connect?api=${APItoken}&month=${this.state.month}`) //Else connect via APItoken
-                .then(res => res.json())
-                .then((res) => {
-                    alert(`Welcome, ${res.user.full_name}! The connection was successful`)
-                    localStorage.setItem(res.user.full_name, APItoken)
-                    this.setState({
-                        APIToken: APItoken,
-                        username: res.user.full_name,
-                        tasks: res.tasks
-                    })
-                })
-                .catch(err => alert("Something went wrong.\nPlease Check if your API key was correct"))
+            this.fetchMonthlyData(APItoken, this.state.month, this.state.year)
+                .then(() => alert(`Welcome, ${this.state.username}! The connection was successful`))
+                .catch(err => alert(err, "Something went wrong.\nPlease Check if your API key was correct"))
     }
 
     render() {
         return (
-            <div className="container-fluid">
-                <div className="row">
-                    <div className="col-lg-2">
-                        <SideBar APITokenCB={this.updateAPIToken} {...this.state} />
-                    </div>
-                    <div className="col-lg-9">
-                        <CalendarFunctionBar {...this.state} getMonthCB={this.getMonthDetail} />
-                        <CalendarContents {...this.state} />
-                    </div>
-                    <div className="col-lg-1">
+            <html>
+                <head>
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"></link>
+                </head>
+                <div className="container-fluid">
+
+                    <div className="row">
+                        <div className="col-lg-2">
+                            <SideBar APITokenCB={this.updateAPIToken} {...this.state} />
+                        </div>
+                        <div className="col-lg-9">
+                            {
+                                this.state.dataLoaded || this.state.username === "Guest" ?
+                                    <div>
+                                        <CalendarFunctionBar {...this.state} getMonthCB={this.getMonthDetail} />
+                                        <CalendarContents {...this.state} />
+                                    </div> :
+                                    <div>loading</div>
+                            }
+                        </div>
+                        <div className="col-lg-1">
+                        </div>
                     </div>
                 </div>
-            </div>
+            </html>
         )
-
     }
 }
 
 
-export default Calendar
+class App extends React.Component {
+    render() {
+        return (
+            <Calendar />
+        )
+    }
+}
+
+
+
+export default App
